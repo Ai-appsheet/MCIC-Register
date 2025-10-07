@@ -175,7 +175,7 @@
 <script>
     async function main() {
         // ◀️ **สำคัญ:** ใส่ LIFF ID ของคุณที่นี่
-        await liff.init({ liffId: "2008243853-w5KYZ5oN" });
+        await liff.init({ liffId: "YOUR_LIFF_ID_HERE" });
 
         if (!liff.isLoggedIn()) {
             liff.login();
@@ -198,16 +198,11 @@
 
         const addressDataUrl = scriptURL + '?action=getAddressData';
         fetch(addressDataUrl)
-            .then(response => {
-                if (!response.ok) throw new Error('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data && data.length > 0) {
                     addressData = data;
                     populateProvinces();
-                } else {
-                    throw new Error('ไม่พบข้อมูลที่อยู่');
                 }
             })
             .catch(err => {
@@ -229,8 +224,7 @@
     function populateProvinces() {
         const provinces = [...new Set(addressData.map(row => row[0]))].sort();
         provinces.forEach(province => {
-            const option = new Option(province, province);
-            $('#province').append(option);
+            $('#province').append(new Option(province, province));
         });
     }
 
@@ -275,58 +269,71 @@
         Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
         Math.sin(dLon / 2) * Math.sin(dLon / 2);
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c; // Distance in km
+      return R * c;
     }
 
+    // **แก้ไข:** เพิ่มสถานะรอ และซ่อน/แสดงข้อมูลตามผลลัพธ์
     $('#getLocationBtn').on('click', function() {
         if (!navigator.geolocation) {
             return Swal.fire('ข้อผิดพลาด', 'เบราว์เซอร์ของคุณไม่รองรับ Geolocation', 'error');
         }
-        
         if (eventLocationsData.length === 0) {
-            return Swal.fire('กำลังโหลด', 'กรุณารอสักครู่ กำลังโหลดข้อมูลสถานที่จัดงาน...', 'info');
+            return Swal.fire('กำลังโหลด', 'กรุณารอสักครู่ ข้อมูลสถานที่ยังไม่พร้อมใช้งาน', 'info');
         }
+
+        // 1. แสดงสถานะ "กำลังรอ" ทันที
+        Swal.fire({
+            title: 'กำลังตรวจสอบตำแหน่ง',
+            text: 'กรุณารอสักครู่...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // 2. ซ่อนผลลัพธ์เก่าและล้างค่าก่อนเริ่มตรวจสอบ
+        $('#eventResult').hide();
+        $('#checkin, #eventLocation, #memo').val('');
 
         navigator.geolocation.getCurrentPosition(position => {
             const userLat = position.coords.latitude;
             const userLon = position.coords.longitude;
             let foundLocation = false;
 
-            for (const event of eventLocationsData) {
-                const eventName = event[0];
-                const eventCoords = event[1].split(',').map(coord => parseFloat(coord.trim()));
-                const eventMemo = event[2];
-                
-                const eventLat = eventCoords[0];
-                const eventLon = eventCoords[1];
+            setTimeout(() => { // หน่วงเวลาเล็กน้อยเพื่อให้ User เห็นสถานะ
+                for (const event of eventLocationsData) {
+                    const eventName = event[0];
+                    const eventCoords = event[1].split(',').map(coord => parseFloat(coord.trim()));
+                    const eventMemo = event[2];
+                    const eventLat = eventCoords[0];
+                    const eventLon = eventCoords[1];
+                    const distance = getDistanceFromLatLonInKm(userLat, userLon, eventLat, eventLon);
 
-                const distance = getDistanceFromLatLonInKm(userLat, userLon, eventLat, eventLon);
+                    if (distance <= 10) {
+                        // 3. ถ้าเจอ: กรอกข้อมูล, แสดงผล, และแจ้งเตือนสำเร็จ
+                        $('#checkin').val(`${userLat}, ${userLon}`);
+                        $('#eventLocation').val(eventName);
+                        $('#memo').val(eventMemo);
+                        $('#eventResult').show(); // แสดงส่วนของข้อมูลสถานที่
 
-                if (distance <= 10) {
-                    $('#checkin').val(`${userLat}, ${userLon}`);
-                    $('#eventLocation').val(eventName);
-                    $('#memo').val(eventMemo);
-                    $('#eventResult').show();
-
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'ตรวจสอบตำแหน่งสำเร็จ!',
-                        html: `คุณอยู่ในพื้นที่ของ: <b>${eventName}</b>`,
-                    });
-                    foundLocation = true;
-                    break;
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'ตรวจสอบตำแหน่งสำเร็จ!',
+                            html: `คุณอยู่ในพื้นที่ของ: <b>${eventName}</b>`,
+                        });
+                        foundLocation = true;
+                        break;
+                    }
                 }
-            }
 
-            if (!foundLocation) {
-                 $('#checkin').val('');
-                 $('#eventLocation').val('');
-                 $('#memo').val('');
-                 $('#eventResult').hide();
-                 Swal.fire('นอกพื้นที่', 'ตำแหน่งของคุณอยู่นอกพื้นที่จัดงานที่กำหนด (ระยะห่างเกิน 10 กม.)', 'warning');
-            }
+                if (!foundLocation) {
+                    // 4. ถ้าไม่เจอ: แจ้งเตือนว่าอยู่นอกพื้นที่
+                    Swal.fire('นอกพื้นที่', 'ตำแหน่งของคุณอยู่นอกพื้นที่จัดงานที่กำหนด (ระยะห่างเกิน 10 กม.)', 'warning');
+                }
+            }, 500);
 
         }, error => {
+            // 5. ถ้าเกิดข้อผิดพลาด: แจ้งเตือน Error
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงตำแหน่งได้ โปรดตรวจสอบการตั้งค่าเบราว์เซอร์', 'error');
         });
     });
