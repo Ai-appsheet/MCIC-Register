@@ -88,28 +88,30 @@
 
             <div class="form-group">
                 <label for="province" class="form-label">จังหวัด</label>
-                <select class="custom-select" id="province" name="จังหวัด">
-                    <option value="">-- เลือกจังหวัด --</option>
-                    <option value="กรุงเทพมหานคร">กรุงเทพมหานคร</option>
-                    <option value="นนทบุรี">นนทบุรี</option>
+                <select class="custom-select" id="province" name="จังหวัด" required>
+                    <option value="">-- กรุณาเลือกจังหวัด --</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="district" class="form-label">อำเภอ</label>
-                <input type="text" class="form-control" id="district" name="อำเภอ">
+                <select class="custom-select" id="district" name="อำเภอ" required>
+                    <option value="">-- กรุณาเลือกอำเภอ --</option>
+                </select>
             </div>
 
             <div class="form-group">
                 <label for="subdistrict" class="form-label">ตำบล</label>
-                <input type="text" class="form-control" id="subdistrict" name="ตำบล">
+                <select class="custom-select" id="subdistrict" name="ตำบล" required>
+                    <option value="">-- กรุณาเลือกตำบล --</option>
+                </select>
             </div>
-
+            
             <div class="form-group">
                 <label for="zipcode" class="form-label">รหัสไปรษณีย์</label>
-                <input type="text" class="form-control" id="zipcode" name="รหัสไปรษณีย์" inputmode="numeric">
+                <input type="text" class="form-control" id="zipcode" name="รหัสไปรษณีย์" readonly>
             </div>
-
+            
             <div class="form-group">
                 <label for="address" class="form-label">บ้านเลขที่</label>
                 <input type="text" class="form-control" id="address" name="บ้านเลขที่">
@@ -146,7 +148,6 @@
 <script>
     // --- LIFF Initialization ---
     async function main() {
-        // ◀️ **สำคัญ:** ใส่ LIFF ID ของคุณที่นี่
         await liff.init({ liffId: "2008243853-w5KYZ5oN" }); 
         
         if (!liff.isLoggedIn()) {
@@ -160,10 +161,91 @@
     main();
 
     // --- Form & Sheet Configuration ---
-    // ◀️ **สำคัญ:** ใช้ URL ที่ได้จากการ Deploy ของคุณ
-    const scriptURL = 'https://script.google.com/macros/s/AKfycby32em7q5mEtEIcjYe1ht-ENi7TzrukbTKIk00YOGw8pGM4WkzlVl5NE0uMmCd0ov4Q/exec'; 
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbwxr2Zn7YQZ-DxTiUyIffRNUFy22ZjuzvSFLe8rYBvNM6DYx0qbhlhesdi95PZw4ONd/exec'; 
     const form = document.forms['data-sheet'];
+
+    // --- Address Data Logic ---
+    let addressData = [];
+    const provinceSelect = document.getElementById('province');
+    const districtSelect = document.getElementById('district');
+    const subdistrictSelect = document.getElementById('subdistrict');
+    const zipcodeInput = document.getElementById('zipcode');
+
+    // Fetch address data from Google Sheet when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        // Use google.script.run for direct communication with Apps Script
+        google.script.run.withSuccessHandler(data => {
+            addressData = data;
+            populateProvinces();
+        }).withFailureHandler(err => {
+            console.error('Failed to load address data:', err);
+            Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถโหลดข้อมูลที่อยู่ได้', 'error');
+        }).getAddressData();
+    });
+
+    function populateProvinces() {
+        const provinces = [...new Set(addressData.map(row => row[0]))]; // Get unique provinces
+        provinces.sort().forEach(province => {
+            const option = new Option(province, province);
+            provinceSelect.add(option);
+        });
+    }
+
+    provinceSelect.addEventListener('change', () => {
+        // Clear subsequent fields
+        districtSelect.innerHTML = '<option value="">-- กรุณาเลือกอำเภอ --</option>';
+        subdistrictSelect.innerHTML = '<option value="">-- กรุณาเลือกตำบล --</option>';
+        zipcodeInput.value = '';
+
+        const selectedProvince = provinceSelect.value;
+        if (!selectedProvince) return;
+        
+        const districts = [...new Set(
+            addressData
+                .filter(row => row[0] === selectedProvince)
+                .map(row => row[1])
+        )];
+        
+        districts.sort().forEach(district => {
+            const option = new Option(district, district);
+            districtSelect.add(option);
+        });
+    });
+
+    districtSelect.addEventListener('change', () => {
+        subdistrictSelect.innerHTML = '<option value="">-- กรุณาเลือกตำบล --</option>';
+        zipcodeInput.value = '';
+
+        const selectedProvince = provinceSelect.value;
+        const selectedDistrict = districtSelect.value;
+        if (!selectedDistrict) return;
+
+        const subdistricts = [...new Set(
+            addressData
+                .filter(row => row[0] === selectedProvince && row[1] === selectedDistrict)
+                .map(row => row[2])
+        )];
+        
+        subdistricts.sort().forEach(subdistrict => {
+            const option = new Option(subdistrict, subdistrict);
+            subdistrictSelect.add(option);
+        });
+    });
     
+    subdistrictSelect.addEventListener('change', () => {
+        const selectedProvince = provinceSelect.value;
+        const selectedDistrict = districtSelect.value;
+        const selectedSubdistrict = subdistrictSelect.value;
+        
+        const match = addressData.find(row => 
+            row[0] === selectedProvince && 
+            row[1] === selectedDistrict && 
+            row[2] === selectedSubdistrict
+        );
+        
+        zipcodeInput.value = match ? match[3] : '';
+    });
+
     // --- Form Submission ---
     form.addEventListener('submit', e => {
         e.preventDefault();
@@ -189,6 +271,9 @@
                             liff.closeWindow();
                         } else {
                             form.reset();
+                            // Reset dropdowns to initial state
+                            districtSelect.innerHTML = '<option value="">-- กรุณาเลือกอำเภอ --</option>';
+                            subdistrictSelect.innerHTML = '<option value="">-- กรุณาเลือกตำบล --</option>';
                         }
                     });
                 } else { throw new Error(data.error); }
@@ -201,5 +286,4 @@
 </script>
 
 </body>
-
 </html>
