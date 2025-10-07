@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ใบลงทะเบียนกิจกรรม</title>
+    <title>ลงทะเบียนร่วมกิจกรรม</title>
+
+    <link rel="icon" type="image/png" href="https://img5.pic.in.th/file/secure-sv1/1200x630wa50d4e652b04a2977.png">
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -17,6 +19,15 @@
         body {
             font-family: 'Sarabun', sans-serif;
             background-color: #f4f7f6;
+        }
+        /* ◀️ **แก้ไข:** เพิ่มสไตล์สำหรับโลโก้ */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .logo-img {
+            max-width: 150px; /* ปรับขนาดโลโก้ได้ตามต้องการ */
+            height: auto;
         }
         .form-container {
             background-color: white;
@@ -75,6 +86,11 @@
 
 <div class="container">
     <div class="form-container">
+        
+        <div class="logo-container">
+            <img src="https://img2.pic.in.th/pic/modern-cass-international-cosmetic-vietnam_400x400_341568856.png?text=YOUR+LOGO" alt="Logo" class="logo-img">
+        </div>
+
         <h3 class="form-title">ใบลงทะเบียนกิจกรรม</h3>
 
         <form method="post" autocomplete="off" name="data-sheet" id="registerForm">
@@ -167,10 +183,9 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    // ไม่มีการแก้ไขในส่วนของ JavaScript
     async function main() {
-        // ◀️ **สำคัญ:** ใส่ LIFF ID ของคุณที่นี่
         await liff.init({ liffId: "YOUR_LIFF_ID_HERE" });
-
         if (!liff.isLoggedIn()) {
             liff.login();
         } else {
@@ -180,16 +195,12 @@
         }
     }
     main();
-
-    // ◀️ **สำคัญ:** ใช้ URL ที่ได้จากการ Deploy ของคุณ
     const scriptURL = 'https://script.google.com/macros/s/AKfycbySaAeX6V71kQW41AHCxCtGee_0IRTZcNX8XsWg40pxuD8vwDL4Lxt2K2ghgYCX4g/exec';
     const form = document.forms['data-sheet'];
     let addressData = [];
     let eventLocationsData = [];
-
     $(document).ready(function() {
         $('#province, #district, #subdistrict').select2();
-
         const addressDataUrl = scriptURL + '?action=getAddressData';
         fetch(addressDataUrl)
             .then(response => response.json())
@@ -203,7 +214,6 @@
                 console.error('Failed to load address data:', err);
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลที่อยู่ได้: ${err.message}`, 'error');
             });
-
         const eventLocationsUrl = scriptURL + '?action=getEventLocations';
         fetch(eventLocationsUrl)
             .then(res => res.json())
@@ -214,14 +224,12 @@
                  Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลสถานที่จัดงานได้`, 'error');
             });
     });
-
     function populateProvinces() {
         const provinces = [...new Set(addressData.map(row => row[0]))].sort();
         provinces.forEach(province => {
             $('#province').append(new Option(province, province));
         });
     }
-
     $('#province').on('change', function() {
         const selectedProvince = $(this).val();
         $('#district').html('<option value="">-- กรุณาเลือกอำเภอ --</option>').val('').trigger('change');
@@ -233,7 +241,6 @@
             $('#district').append(new Option(district, district));
         });
     });
-
     $('#district').on('change', function() {
         const selectedProvince = $('#province').val();
         const selectedDistrict = $(this).val();
@@ -245,7 +252,6 @@
             $('#subdistrict').append(new Option(subdistrict, subdistrict));
         });
     });
-
     $('#subdistrict').on('change', function() {
         const selectedProvince = $('#province').val();
         const selectedDistrict = $('#district').val();
@@ -253,9 +259,8 @@
         const match = addressData.find(row => row[0] === selectedProvince && row[1] === selectedDistrict && row[2] === selectedSubdistrict);
         $('#zipcode').val(match ? match[3] : '');
     });
-
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-      var R = 6371; // Radius of the earth in km
+      var R = 6371;
       var dLat = (lat2 - lat1) * (Math.PI / 180);
       var dLon = (lon2 - lon1) * (Math.PI / 180);
       var a =
@@ -265,7 +270,6 @@
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
-
     $('#getLocationBtn').on('click', function() {
         if (!navigator.geolocation) {
             return Swal.fire('ข้อผิดพลาด', 'เบราว์เซอร์ของคุณไม่รองรับ Geolocation', 'error');
@@ -273,7 +277,6 @@
         if (eventLocationsData.length === 0) {
             return Swal.fire('กำลังโหลด', 'กรุณารอสักครู่ ข้อมูลสถานที่ยังไม่พร้อมใช้งาน', 'info');
         }
-
         Swal.fire({
             title: 'กำลังตรวจสอบตำแหน่ง',
             text: 'กรุณารอสักครู่...',
@@ -282,14 +285,11 @@
                 Swal.showLoading();
             }
         });
-
         $('#checkin, #eventLocation, #memo').val('');
-
         navigator.geolocation.getCurrentPosition(position => {
             const userLat = position.coords.latitude;
             const userLon = position.coords.longitude;
             let foundLocation = false;
-
             setTimeout(() => {
                 for (const event of eventLocationsData) {
                     const eventName = event[0];
@@ -298,14 +298,10 @@
                     const eventLat = eventCoords[0];
                     const eventLon = eventCoords[1];
                     const distance = getDistanceFromLatLonInKm(userLat, userLon, eventLat, eventLon);
-
                     if (distance <= 10) {
                         $('#checkin').val(`${userLat}, ${userLon}`);
                         $('#eventLocation').val(eventName);
                         $('#memo').val(eventMemo);
-                        // **แก้ไข:** ไม่ต้องแสดงข้อมูลสถานที่และ Memo ใน UI
-                        // $('#eventResult').show(); 
-
                         Swal.fire({
                             icon: 'success',
                             title: 'ตรวจสอบตำแหน่งสำเร็จ!',
@@ -315,27 +311,22 @@
                         break;
                     }
                 }
-
                 if (!foundLocation) {
                     Swal.fire('นอกพื้นที่', 'ตำแหน่งของคุณอยู่นอกพื้นที่จัดงานที่กำหนด (ระยะห่างเกิน 10 กม.)', 'warning');
                 }
             }, 500);
-
         }, error => {
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงตำแหน่งได้ โปรดตรวจสอบการตั้งค่าเบราว์เซอร์', 'error');
         });
     });
-
     form.addEventListener('submit', e => {
         e.preventDefault();
-        
         Swal.fire({
             title: 'กำลังบันทึกข้อมูล...',
             text: 'กรุณารอสักครู่',
             allowOutsideClick: false,
             didOpen: () => { Swal.showLoading(); }
         });
-        
         fetch(scriptURL, { method: 'POST', body: new FormData(form)})
             .then(response => response.json())
             .then(data => {
