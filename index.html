@@ -16,70 +16,134 @@
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background-color: #ecf0f1;
+            --form-background: #ffffff;
+            --input-border-color: #bdc3c7;
+            --input-focus-color: #3498db;
+            --text-color: #2c3e50;
+            --label-color: #555;
+            --danger-color: #e74c3c;
+        }
+
         body {
             font-family: 'Sarabun', sans-serif;
-            background-color: #f4f7f6;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
         }
-        /* ◀️ **แก้ไข:** เพิ่มสไตล์สำหรับโลโก้ */
+
+        .form-container {
+            background-color: var(--form-background);
+            padding: 2.5rem 3rem;
+            max-width: 700px;
+            width: 100%;
+            margin: 2rem auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-top: 5px solid var(--secondary-color);
+        }
+
         .logo-container {
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
+
         .logo-img {
-            max-width: 150px; /* ปรับขนาดโลโก้ได้ตามต้องการ */
+            max-width: 120px;
             height: auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
         }
-        .form-container {
-            background-color: white;
-            padding: 2rem;
-            max-width: 600px;
-            margin: 2rem auto;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
+
         .form-title {
             text-align: center;
             font-weight: 700;
-            margin-bottom: 2rem;
-            color: #333;
+            margin-bottom: 2.5rem;
+            color: var(--primary-color);
+            font-size: 2rem;
         }
+
         .form-label {
             font-weight: 500;
-            color: #495057;
+            color: var(--label-color);
+            margin-bottom: .5rem;
         }
+
         .form-control, .custom-select, .select2-container .select2-selection--single {
             border-radius: 8px;
-            height: calc(1.5em + .75rem + 2px);
+            height: 48px;
+            border: 1px solid var(--input-border-color);
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
         }
+
         .form-control:focus, .custom-select:focus, .select2-container--default .select2-selection--single:focus {
-            box-shadow: 0 0 0 0.2rem rgba(30, 132, 73, 0.25);
-            border-color: #1E8449;
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+            border-color: var(--input-focus-color);
+            background-color: var(--form-background);
         }
+        
+        .select2-container--default .select2-selection--single {
+            border: 1px solid var(--input-border-color);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 46px;
+            padding-left: 1rem;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 46px;
+        }
+        
         .btn-submit {
-            background: linear-gradient(45deg, #1E8449, #28B463);
+            background: var(--secondary-color);
             border: none;
-            border-radius: 50px;
+            border-radius: 8px;
             padding: 12px 30px;
             font-weight: 700;
             color: white;
             width: 100%;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+            font-size: 1.1rem;
         }
+
         .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(30, 132, 73, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+            background: #2980b9;
         }
+
         label.required::after {
             content: " *";
-            color: red;
+            color: var(--danger-color);
         }
-        .select2-selection__rendered {
-            line-height: 1.5;
-        }
+        
         .input-group .btn-location {
             border-top-right-radius: 8px;
             border-bottom-right-radius: 8px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            width: 50px;
         }
+        
+        .input-group .btn-location:hover {
+            background-color: #2980b9;
+        }
+
+        .input-group .form-control {
+            border-right: none;
+        }
+
     </style>
 </head>
 <body>
@@ -97,20 +161,21 @@
             <input type="hidden" name="userID" id="userID">
             <input type="hidden" name="profileLine" id="profileLine">
 
-            <div class="form-group">
-                <label for="fullName" class="form-label required">ชื่อ-สกุล</label>
-                <input type="text" class="form-control" id="fullName" name="ชื่อ-สกุล" required>
-            </div>
-
-            <div class="form-group">
-                <label for="shopName" class="form-label required">ชื่อร้านเสริมสวย/บาร์เบอร์</label>
-                <input type="text" class="form-control" id="shopName" name="ชื่อร้านเสริมสวย/บาร์เบอร์" required>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="fullName" class="form-label required">ชื่อ-สกุล</label>
+                    <input type="text" class="form-control" id="fullName" name="ชื่อ-สกุล" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="shopName" class="form-label required">ชื่อร้านเสริมสวย/บาร์เบอร์</label>
+                    <input type="text" class="form-control" id="shopName" name="ชื่อร้านเสริมสวย/บาร์เบอร์" required>
+                </div>
             </div>
 
             <div class="form-group">
                 <label for="checkin" class="form-label required">เช็คอิน</label>
                 <div class="input-group">
-                    <input type="text" class="form-control" id="checkin" name="เช็คอิน" placeholder="กดปุ่มเพื่อระบุและตรวจสอบตำแหน่ง" readonly required>
+                    <input type="text" class="form-control" id="checkin" name="เช็คอิน" placeholder="กดปุ่ม 📍 เพื่อระบุและตรวจสอบตำแหน่ง" readonly required>
                     <div class="input-group-append">
                         <button class="btn btn-outline-secondary btn-location" type="button" id="getLocationBtn"><i class="fas fa-map-marker-alt"></i></button>
                     </div>
@@ -122,30 +187,32 @@
                  <input type="hidden" id="memo" name="Memo">
             </div>
 
-            <div class="form-group">
-                <label for="province" class="form-label required">จังหวัด</label>
-                <select class="custom-select" id="province" name="จังหวัด" required>
-                    <option value="">-- กรุณาเลือกจังหวัด --</option>
-                </select>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="province" class="form-label required">จังหวัด</label>
+                    <select class="custom-select" id="province" name="จังหวัด" required>
+                        <option value="">-- กรุณาเลือกจังหวัด --</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="district" class="form-label required">อำเภอ</label>
+                    <select class="custom-select" id="district" name="อำเภอ" required>
+                        <option value="">-- กรุณาเลือกอำเภอ --</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="district" class="form-label required">อำเภอ</label>
-                <select class="custom-select" id="district" name="อำเภอ" required>
-                    <option value="">-- กรุณาเลือกอำเภอ --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="subdistrict" class="form-label required">ตำบล</label>
-                <select class="custom-select" id="subdistrict" name="ตำบล" required>
-                    <option value="">-- กรุณาเลือกตำบล --</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="zipcode" class="form-label required">รหัสไปรษณีย์</label>
-                <input type="text" class="form-control" id="zipcode" name="รหัสไปรษณีย์" readonly required>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="subdistrict" class="form-label required">ตำบล</label>
+                    <select class="custom-select" id="subdistrict" name="ตำบล" required>
+                        <option value="">-- กรุณาเลือกตำบล --</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="zipcode" class="form-label required">รหัสไปรษณีย์</label>
+                    <input type="text" class="form-control" id="zipcode" name="รหัสไปรษณีย์" readonly required>
+                </div>
             </div>
 
             <div class="form-group">
@@ -153,14 +220,15 @@
                 <input type="text" class="form-control" id="address" name="บ้านเลขที่" required>
             </div>
 
-            <div class="form-group">
-                <label for="phone" class="form-label required">เบอร์โทร</label>
-                <input type="tel" class="form-control" id="phone" name="เบอร์โทร" required>
-            </div>
-
-            <div class="form-group">
-                <label for="age" class="form-label required">อายุ</label>
-                <input type="number" class="form-control" id="age" name="อายุ" required>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="phone" class="form-label required">เบอร์โทร</label>
+                    <input type="tel" class="form-control" id="phone" name="เบอร์โทร" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="age" class="form-label required">อายุ</label>
+                    <input type="number" class="form-control" id="age" name="อายุ" required>
+                </div>
             </div>
 
             <div class="form-group">
@@ -183,9 +251,9 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // ไม่มีการแก้ไขในส่วนของ JavaScript
+    // JavaScript remains unchanged
     async function main() {
-        await liff.init({ liffId: "YOUR_LIFF_ID_HERE" });
+        await liff.init({ liffId: "2008243853-w5KYZ5oN" });
         if (!liff.isLoggedIn()) {
             liff.login();
         } else {
@@ -195,12 +263,19 @@
         }
     }
     main();
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbySaAeX6V71kQW41AHCxCtGee_0IRTZcNX8XsWg40pxuD8vwDL4Lxt2K2ghgYCX4g/exec';
+
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxRJADF6QmPQzORPN6Rfw0DkjjQhpGgJXEtbTJC3mFR2sKwZVRIscaA_nVXybivaQJh/exec';
     const form = document.forms['data-sheet'];
     let addressData = [];
     let eventLocationsData = [];
+
     $(document).ready(function() {
+        $('#province, #district, #subdistrict, #status').select2({
+             minimumResultsForSearch: Infinity 
+        });
+        
         $('#province, #district, #subdistrict').select2();
+
         const addressDataUrl = scriptURL + '?action=getAddressData';
         fetch(addressDataUrl)
             .then(response => response.json())
@@ -214,6 +289,7 @@
                 console.error('Failed to load address data:', err);
                 Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลที่อยู่ได้: ${err.message}`, 'error');
             });
+
         const eventLocationsUrl = scriptURL + '?action=getEventLocations';
         fetch(eventLocationsUrl)
             .then(res => res.json())
@@ -224,12 +300,14 @@
                  Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลสถานที่จัดงานได้`, 'error');
             });
     });
+
     function populateProvinces() {
         const provinces = [...new Set(addressData.map(row => row[0]))].sort();
         provinces.forEach(province => {
             $('#province').append(new Option(province, province));
         });
     }
+
     $('#province').on('change', function() {
         const selectedProvince = $(this).val();
         $('#district').html('<option value="">-- กรุณาเลือกอำเภอ --</option>').val('').trigger('change');
@@ -241,6 +319,7 @@
             $('#district').append(new Option(district, district));
         });
     });
+
     $('#district').on('change', function() {
         const selectedProvince = $('#province').val();
         const selectedDistrict = $(this).val();
@@ -252,6 +331,7 @@
             $('#subdistrict').append(new Option(subdistrict, subdistrict));
         });
     });
+
     $('#subdistrict').on('change', function() {
         const selectedProvince = $('#province').val();
         const selectedDistrict = $('#district').val();
@@ -259,6 +339,7 @@
         const match = addressData.find(row => row[0] === selectedProvince && row[1] === selectedDistrict && row[2] === selectedSubdistrict);
         $('#zipcode').val(match ? match[3] : '');
     });
+
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
       var R = 6371;
       var dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -270,6 +351,7 @@
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
+
     $('#getLocationBtn').on('click', function() {
         if (!navigator.geolocation) {
             return Swal.fire('ข้อผิดพลาด', 'เบราว์เซอร์ของคุณไม่รองรับ Geolocation', 'error');
@@ -319,6 +401,7 @@
             Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงตำแหน่งได้ โปรดตรวจสอบการตั้งค่าเบราว์เซอร์', 'error');
         });
     });
+
     form.addEventListener('submit', e => {
         e.preventDefault();
         Swal.fire({
@@ -355,4 +438,3 @@
 
 </body>
 </html>
-
