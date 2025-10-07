@@ -148,6 +148,7 @@
 <script>
     // --- LIFF Initialization ---
     async function main() {
+        // ◀️ **สำคัญ:** ใส่ LIFF ID ของคุณที่นี่
         await liff.init({ liffId: "2008243853-w5KYZ5oN" }); 
         
         if (!liff.isLoggedIn()) {
@@ -161,9 +162,10 @@
     main();
 
     // --- Form & Sheet Configuration ---
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbwxr2Zn7YQZ-DxTiUyIffRNUFy22ZjuzvSFLe8rYBvNM6DYx0qbhlhesdi95PZw4ONd/exec'; 
+    // ◀️ **สำคัญ:** ใช้ URL ที่ได้จากการ Deploy ของคุณ
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyjtUgs7yUmE_GRgHcaYs7BBEzbhnZpnE8-HKZeUi2bALfLfrGBvq53KMpTHM-lzj0G/exec'; 
     const form = document.forms['data-sheet'];
-
+    
     // --- Address Data Logic ---
     let addressData = [];
     const provinceSelect = document.getElementById('province');
@@ -171,28 +173,41 @@
     const subdistrictSelect = document.getElementById('subdistrict');
     const zipcodeInput = document.getElementById('zipcode');
 
-    // Fetch address data from Google Sheet when the page loads
+    // **แก้ไข:** เปลี่ยนมาใช้ fetch เพื่อความเสถียร
     document.addEventListener('DOMContentLoaded', () => {
-        // Use google.script.run for direct communication with Apps Script
-        google.script.run.withSuccessHandler(data => {
-            addressData = data;
-            populateProvinces();
-        }).withFailureHandler(err => {
-            console.error('Failed to load address data:', err);
-            Swal.fire('เกิดข้อผิดพลาด!', 'ไม่สามารถโหลดข้อมูลที่อยู่ได้', 'error');
-        }).getAddressData();
+        // สร้าง URL สำหรับดึงข้อมูลที่อยู่โดยเฉพาะ
+        const addressDataUrl = scriptURL + '?action=getAddressData';
+        
+        fetch(addressDataUrl)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.length > 0) {
+                    addressData = data;
+                    populateProvinces();
+                } else {
+                    throw new Error('ไม่พบข้อมูลที่อยู่');
+                }
+            })
+            .catch(err => {
+                console.error('Failed to load address data:', err);
+                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถโหลดข้อมูลที่อยู่ได้: ${err.message}`, 'error');
+            });
     });
 
     function populateProvinces() {
-        const provinces = [...new Set(addressData.map(row => row[0]))]; // Get unique provinces
-        provinces.sort().forEach(province => {
+        const provinces = [...new Set(addressData.map(row => row[0]))].sort();
+        provinces.forEach(province => {
             const option = new Option(province, province);
             provinceSelect.add(option);
         });
     }
 
     provinceSelect.addEventListener('change', () => {
-        // Clear subsequent fields
         districtSelect.innerHTML = '<option value="">-- กรุณาเลือกอำเภอ --</option>';
         subdistrictSelect.innerHTML = '<option value="">-- กรุณาเลือกตำบล --</option>';
         zipcodeInput.value = '';
@@ -204,9 +219,9 @@
             addressData
                 .filter(row => row[0] === selectedProvince)
                 .map(row => row[1])
-        )];
+        )].sort();
         
-        districts.sort().forEach(district => {
+        districts.forEach(district => {
             const option = new Option(district, district);
             districtSelect.add(option);
         });
@@ -224,9 +239,9 @@
             addressData
                 .filter(row => row[0] === selectedProvince && row[1] === selectedDistrict)
                 .map(row => row[2])
-        )];
+        )].sort();
         
-        subdistricts.sort().forEach(subdistrict => {
+        subdistricts.forEach(subdistrict => {
             const option = new Option(subdistrict, subdistrict);
             subdistrictSelect.add(option);
         });
@@ -271,16 +286,15 @@
                             liff.closeWindow();
                         } else {
                             form.reset();
-                            // Reset dropdowns to initial state
                             districtSelect.innerHTML = '<option value="">-- กรุณาเลือกอำเภอ --</option>';
                             subdistrictSelect.innerHTML = '<option value="">-- กรุณาเลือกตำบล --</option>';
                         }
                     });
-                } else { throw new Error(data.error); }
+                } else { throw new Error(data.error || 'Unknown error occurred'); }
             })
             .catch(error => {
                 console.error('Error!', error.message);
-                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูลได้`, 'error');
+                Swal.fire('เกิดข้อผิดพลาด!', `ไม่สามารถบันทึกข้อมูลได้: ${error.message}`, 'error');
             });
     });
 </script>
